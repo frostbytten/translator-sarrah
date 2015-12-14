@@ -4,6 +4,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +30,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
   private static final String[] PLUVIOMETRIE_HEADER = {"CodeStation", "Jour", "Pluie"};
   private static final DateTimeFormatter dtfIn = ISODateTimeFormat.basicDate();
   private static final DateTimeFormatter dtfOut = DateTimeFormat.forPattern("dd/MM/yyyy");
+  private static final BigDecimal windConversion = new BigDecimal(86.4);
 
 
   private AceDatasetToSarraH() {} // Cannot initialize this class
@@ -95,6 +97,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
       if (file.isPresent()) {
         LOG.debug("Writing to file {}", file);
         try (Writer writer = openUTF8FileForWrite(file.get());) {
+          // KEEP: Until we verify that we will not output the CSV values.
           // CSVWriter csvwrite = new CSVWriter(writer, '\t');) {
           // Write first line of file (file design specification)
           //writer.write(HEADER);
@@ -128,9 +131,9 @@ public class AceDatasetToSarraH implements IFromAceDataset {
           writer.write(sb.toString());
         }
       }
-    } catch(IOException ex) {
-      LOG.error("An error occured writing a station file: {}", ex.getMessage());
-    }
+      } catch(IOException ex) {
+        LOG.error("An error occured writing a station file: {}", ex.getMessage());
+      }
   }
 
   protected static void writeDailyWeatherFile(AceWeather station, Path destDir) {
@@ -152,7 +155,9 @@ public class AceDatasetToSarraH implements IFromAceDataset {
             String wind = rec.getValueOr("wind", "");
             String windVal = "";
             if (! wind.equals("")) {
-              windVal = Double.toString(Double.parseDouble(wind)/86.4);
+              windVal = (numberFromString(wind).divide(windConversion)).toString();
+              // TODO: Check the difference in the output.
+              //windVal = Double.toString(Double.parseDouble(wind)/86.4);
             }
 
             List<String> values = new ArrayList<String>();
@@ -211,5 +216,10 @@ public class AceDatasetToSarraH implements IFromAceDataset {
     return new OutputStreamWriter(
         new FileOutputStream(file.toFile()),
         StandardCharsets.UTF_8);
+  }
+
+  /* This method should be promoted to agmip-commons */
+  public static BigDecimal numberFromString(String num) {
+    return new BigDecimal(num);
   }
 }

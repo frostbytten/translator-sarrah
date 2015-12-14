@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.Files;
-
 import org.agmip.ace.AceDataset;
 import org.agmip.ace.AceWeather;
-import org.agmip.ace.AceRecordCollection;
 import org.agmip.ace.io.AceParser;
 import static org.junit.Assert.*;
 import org.junit.AfterClass;
@@ -54,9 +51,9 @@ public class WriteStationFileTest {
 
   @AfterClass
   public static void cleanUp() {
-    Path testFile1 = baseDir.resolve("Station_2.txt");
-    Path testFile2 = baseDir.resolve("Meteorologie_2.txt");
-    Path testFile3 = baseDir.resolve("Pluviometrie_2.txt");
+    //Path testFile1 = baseDir.resolve("Station_2.txt");
+    //Path testFile2 = baseDir.resolve("Meteorologie_2.txt");
+    //Path testFile3 = baseDir.resolve("Pluviometrie_2.txt");
     //Files.deleteIfExists(testFile1);
   }
 }
