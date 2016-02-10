@@ -1,0 +1,5 @@
+#separateur|	;date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;
+Id	DateSemis	ProfRacIni	Densite	LaiIni	Mulch	IdIrrigation	DegreesJourIni	BiomasseIni	SeuilEauSemis	NbJTestSemis	IdGestionEau	SeuilStressSemis	Edit	PlantsPerHill	BundHeight	LifeSavingDrainage	PlotDrainageDAF	IrrigAuto	IrrigAutoTarget	Transplanting	DurationNursery	DensityNursery	DensityField	CoeffTransplantingShock	IrrigAutoStop	IrrigAutoResume	FTSWIrrig	TransplantingDepth
+#foreach ( $exp in $exps )
+$!exp.id	$!exp.pdate	$!exp.pldp	$!exp.densite		$!exp.mulch	$!exp.idIrrigation			$!exp.seuilEauSemis	$!exp.sarrah_nbjtestsemis	$!exp.idGestionEau		-1	$!exp.plph	$!exp.abund	$!exp.sarrah_lifesavingdrainage	$!exp.???	$!exp.irrigAuto	$!exp.irrigAutoTarget	$!exp.trdate	$!exp.page	$!exp.nplsb	$!exp.densityField	$!exp.sarrah_coefftransplantingshock	$!exp.sarrah_irrigautostop	$!exp.sarrah_irrigautoresume	$!exp.fTSWIrrig	$!exp.sarrah_transplantingdepth
+#end

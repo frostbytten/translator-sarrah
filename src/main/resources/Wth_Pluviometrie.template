@@ -1,0 +1,7 @@
+#separateur|	";date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;"	
+CodeStation	Jour	Pluie
+#foreach ( $wst in $weathers )
+#foreach ( $data in $wst.dailyWeather )
+$!wst.wst_id	$!util.toSarraHDateFormat($data.w_date)	$!data.rain
+#end
+#end

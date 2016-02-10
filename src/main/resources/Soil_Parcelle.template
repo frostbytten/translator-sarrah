@@ -1,0 +1,5 @@
+#separateur|	";date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;"						
+Id	Nom	StockIniSurf	StockIniProf	EpaisseurSurf	EpaisseurProf	IdTypeSol	Edit
+#foreach ( $soil in $soils )
+$!soil.soil_id $!soil.nom	$!soil.stockIniSurf	$!soil.stockIniProf	$!soil.sltop	$!soil.epaisseurProf	$!soil.soil_id	-1
+#end

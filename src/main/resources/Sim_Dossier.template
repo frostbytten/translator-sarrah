@@ -1,0 +1,3 @@
+#separateur|	;date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;
+Id	Description	Edit
+$!exp.idDossier	$!exp.description	-1
