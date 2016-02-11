@@ -1,3 +1,0 @@
-#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
-CodePays	Code	Nom	Latitude	Longitude	Altitude	CodeTypeStation
-BUR	200001	Ouagadougou aéroport	12.35	-1.52	303	2
