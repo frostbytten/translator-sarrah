@@ -1,0 +1,5 @@
+#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
+Id	CodeStationPluie	CodeStationMeteo	KPar	TMoyJuillet	Edit	JourFinSaison
+#foreach ( $wst in $weathers )
+$!wst.wst_id	$!wst.wst_id	$!wst.wst_id	0.48		-1	
+#end

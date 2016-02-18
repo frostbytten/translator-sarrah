@@ -1,0 +1,5 @@
+#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
+CodePays	Code	Nom	Latitude	Longitude	Altitude	CodeTypeStation
+#foreach ( $wst in $weathers )
+$!wst.wst_loc_1	$!wst.wst_id	$!wst.wst_name	$!util.toGisVal($wst.wst_lat)	$!util.toGisVal($wst.wst_long)	$!util.toGisVal($wst.wst_elev)	2
+#end

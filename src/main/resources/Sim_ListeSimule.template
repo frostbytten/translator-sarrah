@@ -1,0 +1,5 @@
+#separateur|	";date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;"
+IdSimule	IdModele
+#foreach ( $exp in $exps )
+$!exp.exname	SarrahV33
+#end
