@@ -15,7 +15,6 @@ import java.util.Optional;
 //import com.opencsv.CSVWriter;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.TreeSet;
 import org.agmip.ace.*; //Eventually we will be touching all the components
 import org.agmip.common.Functions;
 import org.apache.velocity.VelocityContext;
@@ -82,7 +81,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         writeWeatherFiles(ace.getWeathers(), outputDir, fileNameExt);
         writeSoilFiles(ace.getSoils(), outputDir, fileNameExt);
         writeExperimentFiles(ace.getExperiments(), outputDir, fileNameExt);
-        
+
     }
 
     protected static void writeWeatherFiles(List<AceWeather> stations, Path destDir, String fileNameExt) {
@@ -143,7 +142,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         try {
 
             for (AceSoil soil : soils) {
-                
+
                 StringBuilder sbSoil = new StringBuilder();
                 String soilId = soil.getValueOr("soil_id", "N/A");
                 boolean isMissing = false;
@@ -158,18 +157,18 @@ public class AceDatasetToSarraH implements IFromAceDataset {
                     sbSoil.append("SARRAH_PEVAP__SOIL (apply 0.3 as default), ");
                     isMissing = true;
                 }
-                
+
                 if (isMissing) {
                     sbSoil.append("\r\n");
                 }
 
                 int layerCnt = 1;
                 for (AceRecord layer : soil.getSoilLayers()) {
-                    
+
                     boolean isLayerMissing = false;
                     StringBuilder sbSoilLayer = new StringBuilder();
                     sbSoilLayer.append(" - Layer ").append(layerCnt).append(" : ");
-                    
+
                     for (String check : layerCheckList) {
                         if ("".equals(layer.getValueOr(check, "").trim())) {
                             sbSoilLayer.append(check.toUpperCase()).append(", ");
@@ -180,11 +179,10 @@ public class AceDatasetToSarraH implements IFromAceDataset {
                         sbSoil.append(sbSoilLayer).append("\r\n");
                         isMissing = true;
                     }
-                    
-                    
+
                     layerCnt++;
                 }
-                
+
                 if (isMissing) {
                     sbSoils.append("Soil [").append(soilId).append("] does not have the following required variable for SarraH:\r\n");
                     sbSoils.append(sbSoil).append("\r\n");
@@ -240,10 +238,10 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         }
         writeMgnFile(dataList, destDir, "ItineraireTechnique", fileNameExt);
         writeMgnFile(dataList, destDir, "Irrigation", fileNameExt);
-        writeSimFile(dataList, destDir, "Dossier", fileNameExt);
-        writeSimFile(dataList, destDir, "Modele", fileNameExt);
+        writeSimFileSingle(dataList, destDir, "Dossier", fileNameExt);
+        writeSimFileSingle(dataList, destDir, "Modele", fileNameExt);
+        writeSimFileSingle(dataList, destDir, "ListeRequete", fileNameExt);
         writeSimFile(dataList, destDir, "Simule", fileNameExt);
-        writeSimFile(dataList, destDir, "ListeRequete", fileNameExt);
         writeSimFile(dataList, destDir, "ListeSimule", fileNameExt);
     }
 
@@ -278,6 +276,27 @@ public class AceDatasetToSarraH implements IFromAceDataset {
                 Velocity.init();
                 VelocityContext context = new VelocityContext();
                 Reader R = new InputStreamReader(AceDatasetToSarraH.class.getClassLoader().getResourceAsStream("Sim_" + fileType + ".template"));
+                context.put("exps", exps);
+//                context.put("util", new TransUtil());
+                Velocity.evaluate(context, writer, "Generate " + fileType, R);
+                writer.close();
+            } catch (IOException ex) {
+                LOG.error("An error occured writing a {} file: {}", fileType, ex.getMessage());
+            }
+        }
+    }
+
+    protected static void writeSimFileSingle(List<AceDataAdaptor> exps, Path destDir, String fileType, String fileNameExt) {
+
+        // TODO need to change to single record rather than multiple records for a single data set
+        // Check Marya's comments
+        Optional<Path> file = generateFileName(fileType, destDir, fileNameExt);
+        if (file.isPresent()) {
+            LOG.debug("Writing to file {}", file);
+            try (Writer writer = TransUtil.openUTF8FileForWrite(file.get());) {
+                Velocity.init();
+                VelocityContext context = new VelocityContext();
+                Reader R = new InputStreamReader(AceDatasetToSarraH.class.getClassLoader().getResourceAsStream("Sim_" + fileType + ".template"));
 
                 AceDataAdaptor exp;
                 if (exps.isEmpty()) {
@@ -294,7 +313,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
             }
         }
     }
-    
+
     protected static String getFileNameExt(AceDataset ace) {
         List<AceExperiment> exps = ace.getExperiments();
         if (exps.isEmpty()) {
@@ -303,7 +322,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
             return TransUtil.getFileNameExt(new AceExpAdaptor(exps.get(0)));
         }
     }
-    
+
     // TODO: Update to the latest naming rule
     protected static Optional<Path> generateFileName(String prefix, AceComponent station, Path destDir) {
         try {
@@ -332,140 +351,4 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         Path file = destDir.resolve(fileName);
         return Optional.of(file);
     }
-
-//  // Saved for potential other using rather than SarraH translator itself
-//  protected static void writeWeatherStationFile(AceWeather station, Path destDir) {
-//    try {
-//      Optional<Path> file = generateFileName("Station", station, destDir);
-//      if (file.isPresent()) {
-//        LOG.debug("Writing to file {}", file);
-//        try (Writer writer = openUTF8FileForWrite(file.get());) {
-//          // KEEP: Until we verify that we will not output the CSV values.
-//          // CSVWriter csvwrite = new CSVWriter(writer, '\t');) {
-//          // Write first line of file (file design specification)
-//          //writer.write(HEADER);
-//          // Using the same Writer write TSV for data
-//          //csvwrite.writeNext(STATION_HEADER, false);
-//          //List<String> values = new ArrayList<String>();
-//          //values.add(station.getValueOr("wst_loc_1", ""));
-//          //values.add(station.getValueOr("wst_id", ""));
-//          //values.add(station.getValueOr("wst_name", ""));
-//          //values.add(station.getValueOr("wst_lat", ""));
-//          //values.add(station.getValueOr("wst_long", ""));
-//          //values.add(station.getValueOr("wst_elev", ""));
-//          //values.add(""); //CodeTypeStation not applicable now
-//          //csvwrite.writeNext(values.toArray(new String[0]), false);
-//          StringBuffer sb = new StringBuffer();
-//          sb.append("The ECOTROP Platform (SarraH v3.x and prior) does not allow adding of ");
-//          sb.append("weather station through files. Please add a new Weather station with ");
-//          sb.append("the following information:\n\n");
-//          sb.append("CodePays:   ");
-//          sb.append(station.getValueOr("wst_loc_1", ""));
-//          sb.append("\nCode:       ");
-//          sb.append(station.getValueOr("wst_id", ""));
-//          sb.append("\nNom:        ");
-//          sb.append(station.getValueOr("wst_name", ""));
-//          sb.append("\nLatitude:   ");
-//          sb.append(station.getValueOr("wst_lat", "-999"));
-//          sb.append("\nLongitude:  ");
-//          sb.append(station.getValueOr("wst_long", "-999"));
-//          sb.append("\nAltitude:   ");
-//          sb.append(station.getValueOr("wst_elev", "-999"));
-//          writer.write(sb.toString());
-//        }
-//      }
-//      } catch(IOException ex) {
-//        LOG.error("An error occured writing a station file: {}", ex.getMessage());
-//      }
-//  }
-//  
-//  // Saved for potential other using rather than SarraH translator itself
-//  protected static void writeDailyWeatherFile(AceWeather station, Path destDir) {
-//    try {
-//      Optional<Path> file = generateFileName("Meteorologie", station, destDir);
-//      if (file.isPresent()) {
-//        try (Writer writer = openUTF8FileForWrite(file.get());
-//            CSVWriter csvwrite = new CSVWriter(writer, '\t');) {
-//          //writer.write(HEADER);
-//          String wstid = station.getValueOr("wst_id", "");
-//          csvwrite.writeNext(METEOROLOGIE_HEADER, false);
-//          for( AceRecord rec : station.getDailyWeather()) {
-//            String wdate = rec.getValueOr("w_date", "");
-//            String wDateVal = "";
-//            if (! wdate.equals("")) {
-//              DateTime wDate = dtfIn.parseDateTime(wdate);
-//              wDateVal = dtfOut.print(wDate);
-//            }
-//            String wind = rec.getValueOr("wind", "");
-//            String windVal = "";
-//            if (! wind.equals("")) {
-//              windVal = (numberFromString(wind).divide(windConversion)).toString();
-//              // TODO: Check the difference in the output.
-//              //windVal = Double.toString(Double.parseDouble(wind)/86.4);
-//            }
-//
-//            List<String> values = new ArrayList<String>();
-//            values.add(wstid);
-//            values.add(wDateVal); //Needs conversion
-//            values.add(rec.getValueOr("tmax", ""));
-//            values.add(rec.getValueOr("tmin", ""));
-//            values.add(rec.getValueOr("tavd", ""));
-//            values.add(rec.getValueOr("rhuxd", ""));
-//            values.add(rec.getValueOr("rhumd", ""));
-//            values.add(rec.getValueOr("sarrah_hmoy", ""));
-//            values.add(windVal); //Needs conversion
-//            values.add(rec.getValueOr("sunh", ""));
-//            values.add(rec.getValueOr("srad", ""));
-//            values.add(rec.getValueOr("eto", ""));
-//            csvwrite.writeNext(values.toArray(new String[0]), false);
-//          }
-//            }
-//      }
-//    } catch (IOException ex) {
-//      LOG.error("An error occured writing a daily file: {}", ex.getMessage());
-//    }
-//  }
-//  
-//  // Saved for potential other using rather than SarraH translator itself
-//  protected static void writeDailyRainfallFile(AceWeather station, Path destDir) {
-//    try {
-//      Optional<Path> file = generateFileName("Pluviometrie", station, destDir);
-//      if (file.isPresent()) {
-//        try (Writer writer = openUTF8FileForWrite(file.get());
-//            CSVWriter csvwrite = new CSVWriter(writer, '\t');) {
-//          //writer.write(HEADER);
-//          String wstid = station.getValueOr("wst_id", "");
-//          csvwrite.writeNext(PLUVIOMETRIE_HEADER, false);
-//          for( AceRecord rec : station.getDailyWeather()) {
-//            String wdate = rec.getValueOr("w_date", "");
-//            String wDateVal = "";
-//            if (! wdate.equals("")) {
-//              DateTime wDate = dtfIn.parseDateTime(wdate);
-//              wDateVal = dtfOut.print(wDate);
-//            }
-//            List<String> values = new ArrayList<String>();
-//            values.add(wstid);
-//            values.add(wDateVal); //Needs conversion
-//            values.add(rec.getValueOr("rain", ""));
-//            csvwrite.writeNext(values.toArray(new String[0]), false);
-//          }
-//            }
-//      }
-//    } catch (IOException ex) {
-//      LOG.error("An error occured writing a daily file: {}", ex.getMessage());
-//    }
-//  }
-    /* This method should be promoted to agmip-commons */
-    /* Has add to commons - Meng */
-//  public static Writer openUTF8FileForWrite(Path file) throws IOException {
-//    return new OutputStreamWriter(
-//        new FileOutputStream(file.toFile()),
-//        StandardCharsets.UTF_8);
-//  }
-
-    /* This method should be promoted to agmip-commons */
-    /* already have all kinds of basic calculation in the commons - Meng */
-//  public static BigDecimal numberFromString(String num) {
-//    return new BigDecimal(num);
-//  }
 }

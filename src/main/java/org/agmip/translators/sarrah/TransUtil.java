@@ -12,11 +12,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-import org.agmip.ace.AceDataset;
 import org.agmip.ace.AceEvent;
 import org.agmip.ace.AceEventCollection;
 import org.agmip.ace.AceEventType;
-import org.agmip.ace.AceExperiment;
 import org.agmip.common.Functions;
 import org.agmip.dome.DomeUtil;
 import org.agmip.util.MapUtil;
@@ -119,18 +117,18 @@ public class TransUtil {
             return "";
         }
     }
-    
+
     public static String getDomeMetaInfo(AceExpAdaptor data, String key, String defVal) {
         return getDomeMetaInfoList(data, new String[]{key}, new String[]{defVal}).get(0);
     }
-    
+
     public static List<String> getDomeMetaInfoList(AceExpAdaptor data, String[] keys, String[] defVals) {
-        
+
         List<String> ret = new ArrayList();
         String fieldOverlayString = data.get("field_overlay");
         String seasonalStrategyString = data.get("seasonal_strategy");
         ArrayList<HashMap<String, String>> domeBases = new ArrayList();
-        if (! seasonalStrategyString.equals("")) {
+        if (!seasonalStrategyString.equals("")) {
             domeBases.addAll(getDomeMetaInfos(seasonalStrategyString));
         }
         domeBases.addAll(getDomeMetaInfos(fieldOverlayString));
@@ -138,11 +136,11 @@ public class TransUtil {
         for (int i = 0; i < keys.length && i < defVals.length; i++) {
             ret.add(getDomeMetaInfo(domeBases, keys[i], defVals[i]));
         }
-        
+
         return ret;
-        
+
     }
-    
+
     private static ArrayList<HashMap<String, String>> getDomeMetaInfos(String domeStr) {
         ArrayList<HashMap<String, String>> ret = new ArrayList();
         String[] domes = domeStr.split("[|]");
@@ -169,10 +167,10 @@ public class TransUtil {
 
     /**
      * Generate a Writer object, encoding with UTF_8.
-     * 
+     *
      * @param file
      * @return writer w/ UTF_8
-     * @throws IOException 
+     * @throws IOException
      */
     public static Writer openUTF8FileForWrite(Path file) throws IOException {
         return new OutputStreamWriter(
