@@ -1,5 +1,5 @@
-#separateur|	;date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;															
+#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;															
 Id	IdDossier	IdModele	IdSite	IdParcelle	IdVariete	IdItineraireTechnique	IdDObsParcelle	Debutsimul	FinSimul	AnDebutSimul	AnFinSimul	NbAnSim	DescriptionForcage	IdNextSimule	IdEtp	Edit
 #foreach ( $exp in $exps )
-$!exp.exname	$!exp.idDossier	SarrahV33	$!exp.wst_id	$!exp.soil_id	$!exp.idVariete	$!exp.idItineraireTechnique	$!exp.exname	$!exp.sdat	$!exp.endat	$!exp.anDebutSimul	$!exp.anFinSimul	$!exp.nbAnSim			Eto	-1
+$!exp.exname	$!exp.idDossier	SarrahV33	$!exp.wst_id	$!exp.soil_id	$!exp.idVariete	$!exp.idItineraireTechnique	$!exp.exname	$!exp.sdat	$!exp.endat	$!exp.anDebutSimul	$!exp.anFinSimul	$!exp.nbAnSim			$!exp.idEtp	-1
 #end

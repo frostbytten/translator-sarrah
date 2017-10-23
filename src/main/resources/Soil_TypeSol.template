@@ -1,5 +1,5 @@
-#separateur|	;date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;
+#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
 Id	SeuilRuiss	PourcRuiss	Ru	HumCR	HumPF	HumFC	HumSat	PEvap	PercolationMax	Edit
 #foreach ( $soil in $soils )
-$!soil.soil_id $!soil.seuilRuiss	$!soil.pourcRuiss	$!soil.ru	$!soil.humCR	$!soil.humPF	$!soil.humFC	$!soil.humSat	$!soil.sarrah_pevap__soil	$!soil.percolationMax	-1
+$!soil.soil_id	$!soil.seuilRuiss	$!soil.pourcRuiss	$!soil.ru	$!soil.humCR	$!soil.humPF	$!soil.humFC	$!soil.humSat	$!soil.sarrah_pevap__soil	$!soil.percolationMax	-1
 #end

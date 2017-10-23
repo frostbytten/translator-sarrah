@@ -1,7 +1,7 @@
 #separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
-CodeStation	Jour	Pluie
+CodeStation	Jour	Eto	ETPimp
 #foreach ( $wst in $weathers )
 #foreach ( $data in $wst.dailyWeather )
-$!wst.wst_id	$!util.toSarraHDateFormat($data.w_date)	$!data.rain
+$!wst.wst_id	$!util.toSarraHDateFormat($data.w_date)	$!data.etoCalc	$!data.eto
 #end
 #end
