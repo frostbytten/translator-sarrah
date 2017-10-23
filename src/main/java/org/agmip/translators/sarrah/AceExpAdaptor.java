@@ -8,6 +8,8 @@ import org.agmip.ace.AceEventCollection;
 import org.agmip.ace.AceEventType;
 import org.agmip.ace.AceExperiment;
 import org.agmip.ace.AceInitialConditions;
+import org.agmip.ace.AceRecord;
+import org.agmip.ace.AceWeather;
 import org.agmip.common.Functions;
 
 /**
@@ -23,13 +25,23 @@ public class AceExpAdaptor extends AceDataAdaptor {
 //    private static final String DEF_SLTOP = "20";
     private Optional<AceEventCollection> events = Optional.empty();
     private Optional<AceInitialConditions> intCdns = Optional.empty();
+    private boolean isEtoExisited;
 
     public AceExpAdaptor(AceExperiment data) {
         super(data);
         events = Optional.of(data.getEvents());
         try {
             intCdns = Optional.of(data.getInitialConditions());
+            AceWeather wth = data.getWeather();
+            if (wth != null && !wth.getDailyWeather().isEmpty()) {
+                AceRecord daily = wth.getDailyWeather().getByIndex(0);
+                isEtoExisited = !daily.getValueOr("eto", "").equals("");
+            } else {
+                isEtoExisited = false;
+            }
         } catch (IOException ex) {
+            Functions.getStackTrace(ex);
+        } catch (Exception ex) {
             Functions.getStackTrace(ex);
         }
     }
@@ -38,11 +50,11 @@ public class AceExpAdaptor extends AceDataAdaptor {
         // Construct using EXNAME + CRID + CLIM_ID + RAP_ID + MAN_ID.(e.g., "Kouti001-MAZ-0XXX-0-0")
         // No longer use EXNAME - 2016/01/29
         StringBuilder sb = new StringBuilder();
-//        sb.append(this.get("exname")).append("-");
-        sb.append(this.getCrid()).append("-");
-        sb.append(this.get("clim_id")).append("-");
+//        sb.append(this.get("exname")).append("_");
+        sb.append(this.getCrid()).append("_");
+        sb.append(this.get("clim_id")).append("_");
         List<String> domeInfo = TransUtil.getDomeMetaInfoList(this, new String[]{"rap_id", "man_id"}, new String[]{"0", "0"});
-        sb.append(domeInfo.get(0)).append("-");
+        sb.append(domeInfo.get(0)).append("_");
         sb.append(domeInfo.get(1));
         return sb.toString();
     }
@@ -60,11 +72,11 @@ public class AceExpAdaptor extends AceDataAdaptor {
     }
 
     public String getDensite() {
-        // Densite = PLPOP / 10000
+        // Densite = PLPOP / 10000 -> should be #/m2 -> #/ha, which means multiple by 10000
         String plpop = TransUtil.getFstEventVar(events, AceEventType.ACE_PLANTING_EVENT, "plpop");
-        String ret = Functions.divide(plpop, "10000");
+        String ret = Functions.multiply(plpop, "10000");
         if (ret == null) {
-            return "";
+            return TransUtil.MISSING_VALUE;
         } else {
             return ret;
         }
@@ -77,33 +89,36 @@ public class AceExpAdaptor extends AceDataAdaptor {
                 String icrag = intCdns.get().getValueOr("icrag", "");
                 String ret = Functions.multiply(Functions.exp(Functions.product("-37", "0.00001", icrag)), "100");
                 if (ret == null) {
-                    return "";
+                    return TransUtil.MISSING_VALUE;
                 } else {
                     return ret;
                 }
             } else {
-                return "";
+                return TransUtil.MISSING_VALUE;
             }
         } catch (IOException ex) {
             Functions.getStackTrace(ex);
-            return "";
+            return TransUtil.MISSING_VALUE;
         }
     }
 
     public String getIdIrrigation() {
-        // TODO we might change to another better rule later
-        return getIdDossier();
+        if (TransUtil.isIrrigationExist(events.get())) {
+            // TODO we might change to another better rule later
+            return getIdItineraireTechnique();
+        }
+        return "";
     }
 
     public String getSeuilEauSemis() {
         // (Number of mm of rainfall after start of simulation to trigger planting) - no need to translate further.
         // replaced by the DOME function for auto-planting
-        return "";
+        return TransUtil.MISSING_VALUE;
     }
 
     public String getIdGestionEau() {
         // TODO we might change to another better rule later
-        return "";
+        return TransUtil.MISSING_VALUE;
     }
 
     public String getPlph() {
@@ -125,11 +140,11 @@ public class AceExpAdaptor extends AceDataAdaptor {
                 }
                 return abund;
             } else {
-                return "";
+                return TransUtil.MISSING_VALUE;
             }
         } catch (IOException ex) {
             Functions.getStackTrace(ex);
-            return "";
+            return TransUtil.MISSING_VALUE;
         }
     }
 
@@ -148,7 +163,7 @@ public class AceExpAdaptor extends AceDataAdaptor {
         String irthr = TransUtil.getFstEventVar(events, AceEventType.ACE_AUTO_IRRIG_EVENT, "irthr");
         String ret = Functions.divide(irthr, "100");
         if (ret == null) {
-            return "";
+            return TransUtil.MISSING_VALUE;
         } else {
             return ret;
         }
@@ -189,23 +204,30 @@ public class AceExpAdaptor extends AceDataAdaptor {
     }
 
     public String getIdVariete() {
-        return TransUtil.getFstEventVar(events, AceEventType.ACE_PLANTING_EVENT, "sarrah_cul_id");
+        String cul_id = TransUtil.getFstEventVar(events, AceEventType.ACE_PLANTING_EVENT, "sarrah_cul_id");
+        if (cul_id.equals("")) {
+            cul_id = TransUtil.getFstEventVar(events, AceEventType.ACE_PLANTING_EVENT, "cul_id");
+        }
+        return cul_id;
     }
 
     public String getIdItineraireTechnique() {
         // Construct using EXNAME + CLIM_ID + RAP_ID + MAN_ID + Treatment #.
         // EXNAME usually already contains treatment # and is always unique
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.get("exname")).append("-");
-        sb.append(this.get("clim_id")).append("-");
-        List<String> domeInfo = TransUtil.getDomeMetaInfoList(this, new String[]{"rap_id", "man_id"}, new String[]{"0", "0"});
-        sb.append(domeInfo.get(0)).append("-");
-        sb.append(domeInfo.get(1));
-        String trtno = this.get("trtno");
-        if (!trtno.equals("")) {
-            sb.append("-").append(trtno);
-        }
-        return sb.toString();
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(this.get("exname")).append("_");
+//        sb.append(this.get("clim_id")).append("_");
+//        List<String> domeInfo = TransUtil.getDomeMetaInfoList(this, new String[]{"rap_id", "man_id"}, new String[]{"0", "0"});
+//        sb.append(domeInfo.get(0)).append("_");
+//        sb.append(domeInfo.get(1));
+//        String trtno = this.get("trtno");
+//        if (!trtno.equals("")) {
+//            sb.append("_").append(trtno);
+//        }
+//        return sb.toString();
+        
+        // since this ID is not suggested to be longer than 15-bits, so only use EXNAME instead
+        return this.get("exname");
     }
 
     public String getSdat() {
@@ -225,16 +247,25 @@ public class AceExpAdaptor extends AceDataAdaptor {
     }
 
     public String getNbAnSim() {
-        String expDur = this.get("exp_dur");
-        if (expDur.equals("")) {
-            String start = this.getAnDebutSimul();
-            String end = this.getAnFinSimul();
-            expDur = Functions.sum(Functions.substract(end, start), "1");
-            if (expDur == null) {
-                return "";
-            }
-        }
-        return expDur;
+//        String expDur = this.get("exp_dur");
+//        if (expDur.equals("")) {
+//            String start = this.getAnDebutSimul();
+//            String end = this.getAnFinSimul();
+//            expDur = Functions.sum(Functions.substract(end, start), "1");
+//            if (expDur == null) {
+//                return TransUtil.MISSING_VALUE;
+//            }
+//        }
+//        return expDur;
 
+        return "1"; // Seasonal srategy always make 30-year simulation into 30 separated simulation and each one is a 1-year simulation
+    }
+    
+    public String getIdEtp() {
+        if (isEtoExisited) {
+            return "ETpImp";
+        } else {
+            return "ETo";
+        }
     }
 }

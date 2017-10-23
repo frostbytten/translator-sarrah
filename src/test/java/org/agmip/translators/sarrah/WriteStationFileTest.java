@@ -40,6 +40,7 @@ public class WriteStationFileTest {
     Path testFile = baseDir.resolve("Machakos-MAZ-0XFX.aceb");
     try {
       AceDataset ds = AceParser.parseACEB(testFile.toFile());
+      ds.linkDataset();
       AceDatasetToSarraH.write(ds, baseDir);
     } catch(IOException ex) {
       fail("An unknown IOException occured: "+ex.getMessage());

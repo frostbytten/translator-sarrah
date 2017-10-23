@@ -1,7 +1,7 @@
-#separateur|	;date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;
+#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
 Id	Jour	Irrigation	Edit
 #foreach ( $exp in $exps )
 #foreach ( $irrigation in $exp.irrigations )
-$!exp.idIrrigation	$!irrigation.idate	$!irrigation.irval	-1
+$!exp.idIrrigation	$!util.toSarraHDateFormat($irrigation.date)	$!irrigation.irval	-1
 #end
 #end

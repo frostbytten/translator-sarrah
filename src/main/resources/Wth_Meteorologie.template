@@ -1,7 +1,7 @@
-#separateur|	;date_format|dd/MM/yyyy;heure_format|h:mm:ss AMPM;float_separateur|.;
+#separateur|	;date_format|dd/MM/yyyy;heure_format|hh:mm:ss;float_separateur|.;
 CodeStation	Jour	TMax	TMin	TMoy	HMax	HMin	HMoy	Vt	Ins	Rg	ETP
 #foreach ( $wst in $weathers )
 #foreach ( $data in $wst.dailyWeather )
-$!wst.wst_id	$!util.toSarraHDateFormat($data.w_date)	$!data.tmax	$!data.tmin	$!data.tavd	$!data.rhmxd	$!data.rhumd	$!data.sarrah_hmoy	$!util.toSarraHWind($data.wind)	$!data.sunh	$!data.srad	Eto
+$!wst.wst_id	$!util.toSarraHDateFormat($data.w_date)	$!data.tmax	$!data.tmin	$!data.tavd			$!data.hMoy	$!util.toSarraHWind($data.wind)	$!data.sunh	$!data.srad	$!util.eto
 #end
 #end

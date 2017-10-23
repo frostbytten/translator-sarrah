@@ -15,6 +15,7 @@ import java.util.Optional;
 //import com.opencsv.CSVWriter;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.HashMap;
 import org.agmip.ace.*; //Eventually we will be touching all the components
 import org.agmip.common.Functions;
 import org.apache.velocity.VelocityContext;
@@ -69,23 +70,26 @@ public class AceDatasetToSarraH implements IFromAceDataset {
 //    }
 //  }
     public static void write(AceDataset ace, Path outputDir) {
-        if (!Files.exists(outputDir)) {
-            try {
+        try {
+            if (!Files.exists(outputDir)) {
                 Files.createDirectories(outputDir);
-            } catch (IOException ex) {
-                Functions.getStackTrace(ex);
-                return;
             }
+            ace.linkDataset();
+        } catch (IOException ex) {
+            Functions.getStackTrace(ex);
+            return;
         }
         String fileNameExt = getFileNameExt(ace);
-        writeWeatherFiles(ace.getWeathers(), outputDir, fileNameExt);
-        writeSoilFiles(ace.getSoils(), outputDir, fileNameExt);
-        writeExperimentFiles(ace.getExperiments(), outputDir, fileNameExt);
+        writeWeatherFiles(ace, outputDir, fileNameExt);
+        writeSoilFiles(ace, outputDir, fileNameExt);
+        writeExperimentFiles(ace, outputDir, fileNameExt);
+        writeBatchFiles(outputDir);
 
     }
 
-    protected static void writeWeatherFiles(List<AceWeather> stations, Path destDir, String fileNameExt) {
+    protected static void writeWeatherFiles(AceDataset ace, Path destDir, String fileNameExt) {
 
+        List<AceWeather> stations = ace.getWeathers();
         if (stations.isEmpty()) {
             return;
         }
@@ -95,6 +99,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         }
         writeWeatherFile(dataList, destDir, "Meteorologie", fileNameExt);
         writeWeatherFile(dataList, destDir, "Pluviometrie", fileNameExt);
+        writeWeatherFile(dataList, destDir, "PersonalData", fileNameExt);
         writeWeatherFile(dataList, destDir, "Site", fileNameExt);
         writeWeatherFile(dataList, destDir, "Station", fileNameExt);
     }
@@ -119,15 +124,30 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         }
     }
 
-    protected static void writeSoilFiles(List<AceSoil> soils, Path destDir, String fileNameExt) {
+    protected static void writeSoilFiles(AceDataset ace, Path destDir, String fileNameExt) {
 
+        List<AceSoil> soils = ace.getSoils();
+        List<AceExperiment> exps = ace.getExperiments();
         if (soils.isEmpty()) {
             return;
         }
+        HashMap<String, AceExperiment> soilIcMap = new HashMap();
+        try {
+            for (AceExperiment exp : exps) {
+                soilIcMap.put(exp.getValueOr("soil_id", ""), exp);
+            }
+        } catch (IOException ex) {
+            LOG.error(Functions.getStackTrace(ex));
+        }
+
         validateSoilData(soils, destDir, fileNameExt);
         List<AceDataAdaptor> dataList = new ArrayList();
-        for (AceSoil soil : soils) {
-            dataList.add(new AceSoilAdaptor(soil));
+        try {
+            for (AceSoil soil : soils) {
+                dataList.add(new AceSoilAdaptor(soil, soilIcMap.get(soil.getValueOr("soil_id", ""))));
+            }
+        } catch (Exception ex) {
+            LOG.error(Functions.getStackTrace(ex));
         }
         writeSoilFile(dataList, destDir, "Parcelle", fileNameExt);
         writeSoilFile(dataList, destDir, "TypeSol", fileNameExt);
@@ -226,8 +246,9 @@ public class AceDatasetToSarraH implements IFromAceDataset {
         }
     }
 
-    protected static void writeExperimentFiles(List<AceExperiment> exps, Path destDir, String fileNameExt) {
+    protected static void writeExperimentFiles(AceDataset ace, Path destDir, String fileNameExt) {
 
+        List<AceExperiment> exps = ace.getExperiments();
         if (exps.isEmpty()) {
             return;
         }
@@ -256,7 +277,7 @@ public class AceDatasetToSarraH implements IFromAceDataset {
                 Reader R = new InputStreamReader(AceDatasetToSarraH.class.getClassLoader().getResourceAsStream("Mgn_" + fileType + ".template"));
 
                 context.put("exps", exps);
-//                context.put("util", new TransUtil());
+                context.put("util", new TransUtil());
                 Velocity.evaluate(context, writer, "Generate " + fileType, R);
                 writer.close();
             } catch (IOException ex) {
@@ -310,6 +331,25 @@ public class AceDatasetToSarraH implements IFromAceDataset {
                 writer.close();
             } catch (IOException ex) {
                 LOG.error("An error occured writing a {} file: {}", fileType, ex.getMessage());
+            }
+        }
+    }
+
+    protected static void writeBatchFiles(Path destDir) {
+        String fileName = "runSarraH33_craft.bat";
+        Optional<Path> file = Optional.of(destDir.resolve(fileName));
+        if (file.isPresent()) {
+            LOG.debug("Writing to file {}", file);
+            try (Writer writer = TransUtil.openUTF8FileForWrite(file.get());) {
+                Velocity.init();
+                VelocityContext context = new VelocityContext();
+                Reader R = new InputStreamReader(AceDatasetToSarraH.class.getClassLoader().getResourceAsStream("batch.template"));
+
+                context.put("sarraH33Dir", "C:\\SarraH\\DBEcosys\\SimulAuto");
+                Velocity.evaluate(context, writer, "Generate batch", R);
+                writer.close();
+            } catch (IOException ex) {
+                LOG.error("An error occured writing a {} file: {}", "batch", ex.getMessage());
             }
         }
     }

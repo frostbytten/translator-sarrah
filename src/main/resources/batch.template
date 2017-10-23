@@ -1,0 +1,10 @@
+@echo off
+
+if exist "$sarraH33Dir" (
+  for %%i in ($sarraH33Dir\*.txt) do del %%i
+  copy *.txt ${sarraH33Dir}
+  del $sarraH33Dir\Error*.txt
+  ${sarraH33Dir}\..\..\SarraH_Moteur_v3.exe
+) else (
+  echo "Can not find SarraH33 installed in the default directory ($sarraH33Dir), please modify the batch to fit your directory setting."
+)
